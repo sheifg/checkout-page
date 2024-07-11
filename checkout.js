@@ -21,6 +21,8 @@ function addProduct(event) {
 
   const salePriceProduct = priceProduct.value * 0.7;
 
+  const totalPrice = Number(quantityProduct.value) * Number(salePriceProduct);
+
   const product = {
     // Generating a random id for each product
     id: Date.now(),
@@ -29,7 +31,7 @@ function addProduct(event) {
     salePrice: salePriceProduct.toFixed(2),
     quantity: quantityProduct.value,
     image: imageProduct.value,
-    totalPrice: Number(quantityProduct.value) *Number(salePriceProduct),
+    totalPrice: totalPrice.toFixed(2),
   };
   cart.unshift(product);
 
@@ -55,29 +57,29 @@ function displayProduct() {
               <h3 class="text-warning">
                 ${product.salePrice}€<small
                   class="text-decoration-line-through fs-6 text-dark"
-                  >${product.originalPrice}</small
+                  >${product.originalPrice}€</small
                 >
               </h3>
               <div
                 class="d-flex bg-white border border-2 justify-content-center p-2 m-1"
               >
-                <button class="btn btn-secondary btn-sm decrease">-</button>
+                <button class="btn btn-secondary btn-sm decrease" onclick="decreaseQuantityProduct(${product.id})">-</button>
                 <input
                   type="text"
                   class="form-control border-0 bg-white quantity"
                   style="width: 50px"
                   readonly
-                  value="${product.quantity}"
+                  value="${product.quantity}" id=${product.id}
                 />
-                <button class="btn btn-secondary btn-sm increase">+</button>
+                <button class="btn btn-secondary btn-sm increase" onclick="increaseQuantityProduct(${product.id})">+</button>
               </div>
               <div class="d-grid m-1">
-                <button class="btn btn-danger">
+                <button class="btn btn-danger" onclick="removeProduct(${product.id})">
                   <i class="fa-solid fa-trash p-1"></i>Remove
                 </button>
               </div>
               <p class="m-1">
-                product total:<span id="product-total" class="fs-6 fw-bold"
+                Product total: <span id="product-total" class="fs-6 fw-bold"
                   >${product.totalPrice}€</span
                 >
               </p>
@@ -88,61 +90,42 @@ function displayProduct() {
   productPanel.innerHTML = html.join("");
 }
 
-// To manage the click event on the decrease, increase and remove buttons on each products, the event listener will be attached to the main conatiner of them(productPanel) using capturing effect
 
-productPanel.addEventListener("click", clickHandler);
-
-function clickHandler(event) {
-  const element = event.target;
-  if (element.className.includes("increase")) {
-    increaseQuantityProduct(element);
-  }
-  if (element.className.includes("decrease")) {
-    decreaseQuantityProduct(element);
-  }
-  if (element.className.includes("btn-danger")) {
-    removeProduct(element);
+function decreaseQuantityProduct(id) {
+const selectedProduct = id;
+const product = cart.find((item) => item.id === selectedProduct);
+product.quantity = Number(product.quantity) - 1;
+localStorage.setItem("cart", JSON.stringify(cart));
+if (product.quantity === 0) {
+  const answer = confirm("Do you want to remove this product?");
+  if (answer) {
+    removeProduct(id);
+    return;
+  } else {
+    product.quantity = 1;
   }
 }
+product.totalPrice = (Number(product.quantity) * Number(product.salePrice)).toFixed(2);
 
-// Parameter: element--> it is necessary because the function needs to know in which element the quantity should be decreased
-function decreaseQuantityProduct(element) {
-  // Id of the parent of this product
-  const parentId = Number(element.parentElement.parentElement.parentElement.id);
-  // Finding the product of this id(just the parent has the id, so the children(product) will have the same)
-  const product = cart.find((item) => item.id === parentId);
-  product.quantity = Number(product.quantity) - 1;
-  localStorage.setItem("cart", JSON.stringify(cart));
-  if (product.quantity === 0) {
-    const answer = confirm("Do you want to remove this product?");
-    if (answer) {
-      removeProduct(element);
-      return;
-    } else {
-      product.quantity = 1;
-    }
-  }
-  product.totalPrice = Number(product.quantity) * Number(product.salePrice);
-
-  displayProduct();
-  calculateTotal();
+displayProduct();
+calculateTotal();
 }
 
-function increaseQuantityProduct(element) {
-  const parentId = Number(element.parentElement.parentElement.parentElement.id);
-  const product = cart.find((item) => item.id === parentId);
+function increaseQuantityProduct(id) {
+  const selectedProduct = id;
+  const product = cart.find((item) => item.id === selectedProduct);
   product.quantity = Number(product.quantity) + 1;
   localStorage.setItem("cart", JSON.stringify(cart));
-  product.totalPrice = Number(product.quantity) * Number(product.salePrice);
+  product.totalPrice = (Number(product.quantity) * Number(product.salePrice)).toFixed(2);
 
   displayProduct();
   calculateTotal();
 }
 
-function removeProduct(element) {
-  const parentId = Number(element.parentElement.parentElement.parentElement.id);
+function removeProduct(id) {
+  const selectedProduct = id;
   // Filter all cards that they don't have the id of the card where the remove button is being clicked
-  cart = cart.filter((item) => item.id !== parentId);
+  cart = cart.filter((item) => item.id !== selectedProduct);
   localStorage.setItem("cart", JSON.stringify(cart));
 
   displayProduct();
